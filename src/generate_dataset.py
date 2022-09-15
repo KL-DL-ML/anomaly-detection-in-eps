@@ -8,7 +8,7 @@ from scipy.stats import skew
 from sklearn.utils import shuffle
 
 
-def load_train_val_test(path, features="SPD", transform=True):
+def load_train_val_test(path, features=["SPD", 'ANG'], transform=True):
     """Load training, validation and test sequences
 
     Parameters:
@@ -27,8 +27,8 @@ def load_train_val_test(path, features="SPD", transform=True):
     
     train_df = pd.read_csv(train_path)[:5000]
     val_df = pd.read_csv(val_path)[:5000]
-    test_df = pd.read_csv(test_path)[5000:]
-    test_df = shuffle(test_df)
+    test_df = pd.read_csv(test_path)
+    # test_df = shuffle(test_df)
 
     train_df = train_df.drop(features, axis="columns").astype(np.float32)
     val_df = val_df.drop(features, axis="columns").astype(np.float32)
@@ -49,9 +49,6 @@ def load_train_val_test(path, features="SPD", transform=True):
 
     return train_seq, val_seq, test_seq, seq_len, n_features, scaler
 
-def load_labels():
-    labels = pd.read_csv("training_logs/labels.csv")
-    return labels
 
 def create_dataset(sequences):
     """Create dataset to be passed to LSTM autoencoder"""

@@ -10,7 +10,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-
+from time import time
 from tqdm.auto import trange
 from collections import defaultdict
 from sklearn import metrics
@@ -206,7 +206,7 @@ class Trainer(nn.Module):
                 losses.append(loss.item())
 
         losses = np.array(losses).reshape(-1, 1)
-        predictions = np.array(predictions).reshape(-1, 2)
+        predictions = np.array(predictions).reshape(-1, 1)
 
         return predictions, losses
 
@@ -221,7 +221,7 @@ class Trainer(nn.Module):
         # np.max(reconstruction_error)
 
         # convert dataset to ndarray and unscale the values
-        true_values = np.asarray([s.numpy() for s in dataset]).reshape((-1, 2))
+        true_values = np.asarray([s.numpy() for s in dataset]).reshape((-1, 1))
         true_values = scaler.inverse_transform(true_values)
         predictions = scaler.inverse_transform(predictions)
 
@@ -257,9 +257,11 @@ class Trainer(nn.Module):
             f.write(f"Mean Absolute Error: {mae:.4f}\n")
             f.write(f"R2 score: {R2:.4f}")
 
-        data = {"ANG": list(true_values[:, 0]), "TRQ": list(true_values[:, 1]),
-                "ANG_pred": list(predictions[:, 0]), "TRQ pred": list(predictions[:, 1]),
-                "MAE": list(losses.flatten())}
+        # data = {"ANG": list(true_values[:, 0]), "TRQ": list(true_values[:, 1]),
+        #         "ANG_pred": list(predictions[:, 0]), "TRQ pred": list(predictions[:, 1]),
+        #         "MAE": list(losses.flatten())}
+
+        data = {"TRQ": list(true_values[:, 0]), "TRQ pred": list(predictions[:, 0]), "MAE": list(losses.flatten())}
 
         df = pd.DataFrame.from_dict(data, orient="columns")
         df["Anomaly"] = df["MAE"] >= threshold
@@ -273,8 +275,10 @@ if __name__ == "__main__":
     model = LAE(seq_len=target_len, n_features=num_features, embedding_dim=128, num_layers=1)
 
     # instantiate trainer and train
+    start = time()
     trainer = Trainer(log_dir="training_logs", model_name="steering")
-    hist = trainer.fit(model, train_ds, val_ds, num_epochs=50, learning_rate=1e-03)
+    hist = trainer.fit(model, train_ds, val_ds, num_epochs=50, learning_rate=0.0009)
+    print('Training time: ' + "{:10.4f}".format(time() - start) + ' s')
     trainer.plot_loss_history(history=hist, filename="loss")
 
     forecast, _losses = trainer.predict(model, model_path="training_logs/steering.pth", dataset=test_ds)

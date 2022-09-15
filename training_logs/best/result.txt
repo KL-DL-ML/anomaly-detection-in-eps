@@ -1,0 +1,4 @@
+Threshold: 0.012
+Accuracy:  96.25
+Mean Absolute Error: 4.0723
+R2 score: 0.9996
